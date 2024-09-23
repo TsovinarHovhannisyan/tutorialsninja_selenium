@@ -1,95 +1,61 @@
-name: Python Autotests with Allure
+name: Python autotests with Allure
 
 on: 
-  workflow_dispatch:
-    inputs:
-      deployment_target:
-        description: Choose tests set
-        required: true
-        type: choice
-        default: smoke
-        options:
-          - smoke
-          - regression
-          - all
-
+   workflow_dispatch:
+      inputs:
+         deployment_target:
+            description: choose tests set
+            required: true
+            type: choice
+            default: smoke
+            options:
+               - smoke
+               - regression
+               - all
+   
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    name: Run Autotests
+    name: Run autotests
     steps:
-      - name: Checkout Repository
+      - name: Run autotests
         uses: actions/checkout@v4
-
-      - name: Set up Python environment
+      - name: Set up Python evironment
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
+      - name: Pip Upgrade
+        run:
+          python -m pip install --upgrade pip
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      # Selenium Setup
-      - name: Install Chrome browser
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Install ChromeDriver
-        run: |
-          CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
-          wget -N https://chromedriver.storage.googleapis.com/$CHROME_VERSION/chromedriver_linux64.zip
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          rm chromedriver_linux64.zip
-
-      # Run all tests
-      - name: Run all tests
-        if: "github.event.inputs.deployment_target == 'all'"
+        run:  
+          pip install -r requirements.txt
+      - name: run all tests
+        if: "github.event.inputs.deployment_target == 'all'"  
         run: pytest --alluredir=allure-results
         continue-on-error: true
-
-      # Run smoke tests
-      - name: Run smoke tests
-        if: "github.event.inputs.deployment_target == 'smoke'"
+      - name: run smoke tests
+        if: "github.event.inputs.deployment_target == 'smoke'"  
         run: pytest -m smoke --alluredir=allure-results
         continue-on-error: true
-
-      # Run regression tests
-      - name: Run regression tests
-        if: "github.event.inputs.deployment_target == 'regression'"
+      - name: run regression tests
+        if: "github.event.inputs.deployment_target == 'regression'"  
         run: pytest -m regression --alluredir=allure-results
         continue-on-error: true
-
-      # Install Java for Allure
       - name: Install Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      # Install Allure
+           distribution: 'microsoft'
+           java-version: '17'
       - name: Install Allure
-        run: |
-          sudo wget https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz
-          sudo tar -zxvf allure-2.24.1.tgz -C /opt/
-          sudo ln -s /opt/allure-2.24.1/bin/allure /usr/bin/allure
-
-      # Add Executor and Categories to Allure Results
-      - name: Add Executor and Categories in Allure Results
-        run: cp -r categories.json executor.json allure-results/
-
-      # Generate report
+        run: sudo wget https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz && sudo tar -zxvf allure-2.24.1.tgz -C /opt/ && sudo ln -s /opt/allure-2.24.1/bin/allure /usr/bin/allure
+      - name: Add Executor And Categories in Allure Results
+        run: cp -r categories.json executor.json allure-results/  
       - name: Generate report  
         run: allure generate -c allure-results -o allure-report
-
-      # Save allure report
       - name: Save allure report
         uses: actions/upload-artifact@v3
         with:
-          name: allure-report
-          path: allure-report
-          retention-days: 1
+           name: allure-report
+           path: allure-report
+           etention-days: 1
