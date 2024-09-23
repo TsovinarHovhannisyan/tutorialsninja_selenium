@@ -1,0 +1,64 @@
+name: Python Autotests
+
+on: 
+  workflow_dispatch:
+    inputs:
+      deployment_target:
+        description: Choose tests set
+        required: true
+        type: choice
+        default: smoke
+        options:
+          - smoke
+          - regression
+          - all
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    name: Run Autotests
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # Selenium Setup
+      - name: Install Chrome browser
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install ChromeDriver
+        run: |
+          CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
+          wget -N https://chromedriver.storage.googleapis.com/$CHROME_VERSION/chromedriver_linux64.zip
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
+          rm chromedriver_linux64.zip
+
+      # Run all tests
+      - name: Run all tests
+        if: "github.event.inputs.deployment_target == 'all'"
+        run: pytest
+
+      # Run smoke tests
+      - name: Run smoke tests
+        if: "github.event.inputs.deployment_target == 'smoke'"
+        run: pytest -m smoke
+
+      # Run regression tests
+      - name: Run regression tests
+        if: "github.event.inputs.deployment_target == 'regression'"
+        run: pytest -m regression
