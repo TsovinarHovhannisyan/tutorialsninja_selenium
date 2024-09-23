@@ -1,0 +1,6 @@
+Cart contents text: MacBook x1 $602.00
+Sub-Total $500.00
+Eco Tax (-2.00) $2.00
+VAT (20%) $100.00
+Total $602.00
+View Cart   Checkout
